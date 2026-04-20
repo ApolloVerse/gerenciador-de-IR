@@ -1,6 +1,5 @@
 {
-  "name": "FinTrack - Gestão e IR Universal",
-  "description": "Plataforma inteligente e universal para gerenciamento de ativos financeiros e declaração de imposto de renda com leitor de PDFs por IA.",
-  "requestFramePermissions": [],
-  "majorCapabilities": []
+  "name": "Gerenciador de IR",
+  "description": "Gerenciador completo para controle de investimentos, preço médio e relatórios consolidados para Imposto de Renda com suporte a impressão e exportação.",
+  "requestFramePermissions": []
 }
