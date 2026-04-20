@@ -1,0 +1,93 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // 0. Default Deny Catch-all
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // --- Global Helpers ---
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+    
+    function incoming() {
+      return request.resource.data;
+    }
+    
+    function existing() {
+      return resource.data;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    // --- Entity Specific Validations ---
+    
+    function isValidUserProfile(data) {
+      return data.keys().hasAll(['email']) &&
+             data.email is string && data.email.size() <= 256;
+    }
+
+    function isValidAsset(data) {
+      return data.keys().hasAll(['userId', 'ticker', 'type', 'quantity', 'averagePrice']) &&
+             data.userId == request.auth.uid &&
+             data.ticker is string && data.ticker.size() <= 16 &&
+             data.type is string &&
+             data.quantity is number &&
+             data.averagePrice is number;
+    }
+
+    function isValidTransaction(data) {
+      return data.keys().hasAll(['userId', 'assetId', 'type', 'date', 'quantity', 'unitPrice']) &&
+             data.userId == request.auth.uid &&
+             data.assetId is string &&
+             data.type in ['COMPRA', 'VENDA', 'RENDIMENTO', 'AMORTIZACAO', 'BONIFICACAO'] &&
+             data.date is string &&
+             data.quantity is number &&
+             data.unitPrice is number;
+    }
+
+    function isValidDARF(data) {
+      return data.keys().hasAll(['userId', 'month', 'year', 'amount', 'status', 'code', 'dueDate']) &&
+             data.userId == request.auth.uid &&
+             data.status in ['PENDENTE', 'PAGO', 'ATRASADO'];
+    }
+
+    // --- Path Rules ---
+
+    match /users/{userId} {
+      allow get: if isOwner(userId);
+      allow create: if isOwner(userId) && isValidUserProfile(incoming());
+      allow update: if isOwner(userId) && isValidUserProfile(incoming()) && 
+                    incoming().diff(existing()).affectedKeys().hasOnly(['displayName', 'cpf', 'address']);
+
+      match /assets/{assetId} {
+        allow list, get: if isOwner(userId);
+        allow create: if isOwner(userId) && isValidAsset(incoming()) && isValidId(assetId);
+        allow update: if isOwner(userId) && isValidAsset(incoming()) && 
+                      incoming().diff(existing()).affectedKeys().hasOnly(['quantity', 'averagePrice', 'name', 'lastUpdate', 'institution', 'currentPrice']);
+        allow delete: if isOwner(userId);
+      }
+
+      match /transactions/{transactionId} {
+        allow list, get: if isOwner(userId);
+        allow create: if isOwner(userId) && isValidTransaction(incoming()) && isValidId(transactionId);
+        allow update, delete: if isOwner(userId);
+      }
+
+      match /darfs/{darfId} {
+        allow list, get: if isOwner(userId);
+        allow create: if isOwner(userId) && isValidDARF(incoming()) && isValidId(darfId);
+        allow update: if isOwner(userId) && isValidDARF(incoming()) && 
+                      incoming().diff(existing()).affectedKeys().hasOnly(['status']);
+        allow delete: if isOwner(userId);
+      }
+    }
+  }
+}
