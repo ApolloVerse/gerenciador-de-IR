@@ -342,7 +342,7 @@ export default function App() {
   const [isSnapshotModalOpen, setIsSnapshotModalOpen] = useState(false);
   const [isDarfModalOpen, setIsDarfModalOpen] = useState(false);
   const [selectedDarf, setSelectedDarf] = useState<any>(null);
-  const [userApiKey, setUserApiKey] = useState(localStorage.getItem('USER_GEMINI_API_KEY') || import.meta.env.VITE_GEMINI_API_KEY || '');
+  const [userApiKey, setUserApiKey] = useState(localStorage.getItem('USER_GEMINI_API_KEY') || '');
   const [isProcessingPdf, setIsProcessingPdf] = useState(false);
   const [editingAsset, setEditingAsset] = useState<Asset | null>(null);
 
@@ -1129,7 +1129,7 @@ export default function App() {
   };
 
   const extractDataFromPdf = async (text: string) => {
-    const apiKey = import.meta.env.VITE_GEMINI_API_KEY || userApiKey;
+    const apiKey = userApiKey || import.meta.env.VITE_GEMINI_API_KEY;
     if (!apiKey) {
       setIsSettingsModalOpen(true);
       throw new Error('Chave de API do Gemini não configurada. Por favor, insira sua chave nas configurações.');
@@ -1316,7 +1316,7 @@ export default function App() {
   };
 
   const extractIrpfDataFromPdf = async (text: string) => {
-    const apiKey = import.meta.env.VITE_GEMINI_API_KEY || userApiKey;
+    const apiKey = userApiKey || import.meta.env.VITE_GEMINI_API_KEY;
     if (!apiKey) {
       setIsSettingsModalOpen(true);
       throw new Error('Chave de API do Gemini não configurada. Por favor, insira sua chave nas configurações.');
